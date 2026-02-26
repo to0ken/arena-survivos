@@ -1,11 +1,4 @@
 class Hero {
-  /**
-   * Создаёт нового героя
-   * @param {string} id - Уникальный идентификатор
-   * @param {string} name - Имя героя
-   * @param {Object} baseStats - Базовые характеристики {hp, attack, defense, speed}
-   * @param {string} type - Тип героя ('warrior', 'archer', 'mage')
-   */
 
   constructor(id, name, baseStats, type) {
     this.id = id;
@@ -32,9 +25,6 @@ class Hero {
     // Экипировка (оружие, броня, аксессуар)
     this.equipment = { weapon: null, armor: null, accessory: null };
 
-    // Навыки и очки навыков (каждые 3 уровня)
-    // this.skills = [];
-    // this.skillPoints = 0;
   }
 
   /**
@@ -84,11 +74,7 @@ class Hero {
     }
   }
 
-  /**
-   * Экипирует предмет в указанный слот
-   * @param {Object} item - Предмет для экипировки
-   * @param {string} slot - Слот ('weapon', 'armor', 'accessory')
-   */
+
   equip(item, slot) {
     if (slot === "weapon" || slot === "armor" || slot === "accessory") {
       this.equipment[slot] = item;
@@ -96,19 +82,19 @@ class Hero {
     }
   }
 
-  /**
-   * Добавляет предмет в первый свободный слот инвентаря
-   * @param {Object} item - Предмет для добавления
-   * @returns {boolean} - true если предмет добавлен, false если инвентарь полон
-   */
-  addToInventory(item) {
+  // ДОБАВИЛА ПРОВЕРКУ id
+    addToInventory(item) {
+    if (!item || !item.id) {
+      return false;
+    }
     const emptySlot = this.inventory.findIndex((slot) => slot === null);
     if (emptySlot !== -1) {
       this.inventory[emptySlot] = item;
       return true;
     }
-    return false; // Инвентарь полон
+    return false;
   }
 }
+
 
 window.Hero = Hero;
