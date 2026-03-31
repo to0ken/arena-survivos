@@ -1,3 +1,18 @@
+/* style.css */
+/* Главный файл стилей - только импорты */
+
+@import url('css/base.css');
+@import url('css/layout.css');
+@import url('css/components.css');
+@import url('css/arena.css');
+@import url('css/modals.css');
+@import url('css/animations.css');
+
+/* Специфичные для арены стили, которые переопределяют базовые */
+.screen#screenArena .arena-header {
+    display: flex !important;
+}
+
 * {
     margin: 0;
     padding: 0;
