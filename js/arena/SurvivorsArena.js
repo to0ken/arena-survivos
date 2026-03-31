@@ -225,73 +225,78 @@ class SurvivorsArena {
     }
 
     update(deltaTime) {
-        this.gameTime += deltaTime;
+      this.gameTime += deltaTime;
 
-        this.updateUI();
+      this.updateUI();
 
-        // НОВОЕ: Обновляем менеджер волн
-        if (this.waveManager) {
-            this.waveManager.update(deltaTime);
+      // НОВОЕ: Обновляем менеджер волн
+      if (this.waveManager) {
+        this.waveManager.update(deltaTime);
+      }
+
+      if (!this.skillChoiceShown && this.hero && this.hero.heroData) {
+        this.checkSkillChoice();
+      }
+
+      if (this.isPaused) return;
+
+      this.handleHeroMovement(deltaTime);
+      this.hero.update(deltaTime, this.worldWidth, this.worldHeight);
+
+      // НОВОЕ: Регенерация героя
+      //this.hero.regen(deltaTime);
+
+      this.updateCamera();
+
+      if (this.hero.hp <= 0) {
+        this.gameOver();
+        return;
+      }
+
+      // НОВОЕ: Спавн врагов через менеджер волн
+      if (this.waveManager && this.waveManager.canSpawnEnemy()) {
+        this.spawnEnemy();
+      }
+
+      // Обновляем врагов
+      this.enemies = this.enemies.filter((enemy) => {
+        enemy.update(deltaTime, this.hero, this.worldWidth, this.worldHeight);
+        this.checkWeaponHits(enemy);
+        return enemy.hp > 0;
+      });
+
+      // Обновляем кристаллы опыта
+      this.expGems = this.expGems.filter((gem) => {
+        if (!gem) return false;
+        gem.update(deltaTime, this.worldWidth, this.worldHeight);
+
+        if (this.hero) {
+          const distance = Math.hypot(
+            gem.worldX - this.hero.worldX,
+            gem.worldY - this.hero.worldY,
+          );
+          if (distance < this.hero.radius + gem.radius + this.hero.expMagnet) {
+            this.hero.addExp(gem.value);
+            return false;
+          }
         }
+        return true;
+      });
 
-        if (!this.skillChoiceShown && this.hero && this.hero.heroData) {
-            this.checkSkillChoice();
+      // НОВОЕ: Обновляем сундуки
+      this.chests = this.chests.filter((chest) => {
+        chest.update(deltaTime, this.hero);
+        return !chest.isOpen; // Удаляем открытые сундуки
+      });
+
+      // НОВОЕ: Спавним новый сундук с некоторым шансом
+      if (this.waveManager && Math.random() < 0.001 * deltaTime * 60) {
+        // ~0.1% шанс в секунду
+        if (this.chests.length < 3) {
+          // Не больше 3 сундуков одновременно
+          this.spawnChest();
         }
-
-        if (this.isPaused) return;
-
-        this.handleHeroMovement(deltaTime);
-        this.hero.update(deltaTime, this.worldWidth, this.worldHeight);
-
-        // НОВОЕ: Регенерация героя
-        this.hero.regen(deltaTime);
-
-        this.updateCamera();
-
-        if (this.hero.hp <= 0) {
-            this.gameOver();
-            return;
-        }
-
-        // НОВОЕ: Спавн врагов через менеджер волн
-        if (this.waveManager && this.waveManager.canSpawnEnemy()) {
-            this.spawnEnemy();
-        }
-
-        // Обновляем врагов
-        this.enemies = this.enemies.filter(enemy => {
-            enemy.update(deltaTime, this.hero, this.worldWidth, this.worldHeight);
-            this.checkWeaponHits(enemy);
-            return enemy.hp > 0;
-        });
-
-        // Обновляем кристаллы опыта
-        this.expGems = this.expGems.filter(gem => {
-            if (!gem) return false;
-            gem.update(deltaTime, this.worldWidth, this.worldHeight);
-
-            if (this.hero) {
-                const distance = Math.hypot(gem.worldX - this.hero.worldX, gem.worldY - this.hero.worldY);
-                if (distance < this.hero.radius + gem.radius + this.hero.expMagnet) {
-                    this.hero.addExp(gem.value);
-                    return false;
-                }
-            }
-            return true;
-        });
-
-        // НОВОЕ: Обновляем сундуки
-        this.chests = this.chests.filter(chest => {
-            chest.update(deltaTime, this.hero);
-            return !chest.isOpen; // Удаляем открытые сундуки
-        });
-
-        // НОВОЕ: Спавним новый сундук с некоторым шансом
-        if (this.waveManager && Math.random() < 0.001 * deltaTime * 60) { // ~0.1% шанс в секунду
-            if (this.chests.length < 3) { // Не больше 3 сундуков одновременно
-                this.spawnChest();
-            }
-        }
+      }
     }
 
     checkWeaponHits(enemy) {
