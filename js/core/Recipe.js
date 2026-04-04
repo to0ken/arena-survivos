@@ -22,26 +22,34 @@ class Recipe {
 
 
   canCraft(hero, availableMaterials) {
+    // 🔹 НОВОЕ: Проверяем, открыт ли рецепт
+    if (!this.isUnlocked) {
+        return {
+            success: false,
+            message: 'Рецепт еще не открыт',
+        };
+    }
+
     // Проверяем уровень
     if (hero.level < this.requiredLevel) {
-      return {
-        success: false,
-        message: `Требуется уровень ${this.requiredLevel}`,
-      };
+        return {
+            success: false,
+            message: `Требуется уровень ${this.requiredLevel}`,
+        };
     }
 
     // Проверяем материалы
     for (const material of this.materials) {
-      if (
-        !availableMaterials[material.itemId] ||
-        availableMaterials[material.itemId] < material.quantity
-      ) {
-        return { success: false, message: `Не хватает ${material.itemId}` };
-      }
+        if (
+            !availableMaterials[material.itemId] ||
+            availableMaterials[material.itemId] < material.quantity
+        ) {
+            return { success: false, message: `Не хватает ${material.itemId}` };
+        }
     }
 
     return { success: true, message: "Можно скрафтить" };
-  }
+}
 
 
   tryUnlockNewRecipe(allRecipes) {
@@ -180,40 +188,45 @@ class RecipeManager {
 
    
     craft(recipeId, hero, materials) {
-        const recipe = this.getRecipe(recipeId);
-        if (!recipe) {
-            return { success: false, message: 'Рецепт не найден' };
-        }
-        
-        // Проверяем, открыт ли рецепт
-        if (!recipe.isUnlocked) {
-            return { success: false, message: 'Рецепт еще не открыт' };
-        }
-        
-        // Проверяем возможность крафта
-        const canCraft = recipe.canCraft(hero, materials);
-        if (!canCraft.success) {
-            return canCraft;
-        }
-        
-        // Проверяем, есть ли место в инвентаре
-        const added = hero.addToInventory({ ...recipe.resultItem });
-        if (!added) {
-            return { success: false, message: 'Инвентарь героя полон' };
-        }
-        
-        // Списываем материалы
-        for (const material of recipe.materials) {
-            materials[material.itemId] -= material.quantity;
-        }
-        
-        // Пытаемся открыть новый рецепт
-        const newRecipe = recipe.tryUnlockNewRecipe(this.recipes);
-        
-        let message = `Создан ${recipe.resultItem.name}`;
-        if (newRecipe) {
-            message += `\n🔓 Открыт новый рецепт: ${newRecipe.name}!`;
-        }
+    const recipe = this.getRecipe(recipeId);
+    if (!recipe) {
+        return { success: false, message: 'Рецепт не найден' };
+    }
+    
+    
+    
+    // Проверяем возможность крафта (включая isUnlocked, уровень и материалы)
+    const canCraft = recipe.canCraft(hero, materials);
+    if (!canCraft.success) {
+        return canCraft;
+    }
+    
+    // Проверяем, есть ли место в инвентаре
+    const added = hero.addToInventory({ ...recipe.resultItem });
+    if (!added) {
+        return { success: false, message: 'Инвентарь героя полон' };
+    }
+    
+    // Списываем материалы
+    for (const material of recipe.materials) {
+        materials[material.itemId] -= material.quantity;
+    }
+    
+    // Пытаемся открыть новый рецепт
+    const newRecipe = recipe.tryUnlockNewRecipe(this.recipes);
+    
+    let message = `Создан ${recipe.resultItem.name}`;
+    if (newRecipe) {
+        message += `\n🔓 Открыт новый рецепт: ${newRecipe.name}!`;
+    }
+    
+    return {
+        success: true,
+        message: message,
+        item: recipe.resultItem,
+        newRecipe: newRecipe
+    };
+}
         
         return {
             success: true,
