@@ -365,34 +365,40 @@ class SurvivorsArena {
     }
 
     spawnEnemy() {
-        let x, y;
-        const viewMargin = 300;
+    let x, y;
+    const viewMargin = 300;
+    const minDistanceFromHero = 300; // 🔹 Минимальная дистанция от героя
 
-        do {
-            x = Math.random() * this.worldWidth;
-            y = Math.random() * this.worldHeight;
-        } while (
+    do {
+        x = Math.random() * this.worldWidth;
+        y = Math.random() * this.worldHeight;
+    } while (
+        // 🔹 Проверка: не слишком ли близко к герою?
+        (this.hero && Math.hypot(x - this.hero.worldX, y - this.hero.worldY) < minDistanceFromHero) ||
+        // Проверка: не в зоне видимости камеры?
+        (
             x > this.cameraX - viewMargin &&
             x < this.cameraX + this.screenWidth + viewMargin &&
             y > this.cameraY - viewMargin &&
             y < this.cameraY + this.screenHeight + viewMargin
-        );
+        )
+    );
 
-        // НОВОЕ: Получаем доступных врагов из менеджера волн
-        const availableEnemies = this.waveManager ?
-            this.waveManager.getAvailableEnemies() :
-            ['goblin', 'skeleton'];
+    // Получаем доступных врагов из менеджера волн
+    const availableEnemies = this.waveManager ?
+        this.waveManager.getAvailableEnemies() :
+        ['goblin', 'skeleton'];
 
-        const enemyType = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
-        const difficulty = this.waveManager ? this.waveManager.getDifficultyMultiplier() : 1;
+    const enemyType = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+    const difficulty = this.waveManager ? this.waveManager.getDifficultyMultiplier() : 1;
 
-        const enemy = new ArenaEnemy(x, y, difficulty, enemyType);
-        this.enemies.push(enemy);
+    const enemy = new ArenaEnemy(x, y, difficulty, enemyType);
+    this.enemies.push(enemy);
 
-        if (this.waveManager) {
-            this.waveManager.onEnemySpawned();
-        }
+    if (this.waveManager) {
+        this.waveManager.onEnemySpawned();
     }
+}
 
     // НОВЫЙ МЕТОД: Спавн сундука
     spawnChest() {
